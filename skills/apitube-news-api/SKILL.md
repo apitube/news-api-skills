@@ -36,24 +36,42 @@ See https://docs.apitube.io/platform/news-api/authentication.
 
 ## Endpoints
 
-Every endpoint accepts both `GET` (query string) and `POST` (JSON body) with the same parameters.
+| Endpoint | Methods | Purpose |
+|----------|---------|---------|
+| `/news/everything` | GET · POST | Search all articles with full filtering |
+| `/news/top-headlines` | GET · POST | Breaking and important news from sources with OPR rank >= 5 |
+| `/news/count` | GET · POST | Number of matching articles only — one `count(*)`, no article payload |
+| `/news/article` | GET · POST | A single article — pass `id=<articleId>`, not `article.id` (`400 ER0232` without it) |
+| `/news/story/{articleId}` | GET · POST | The cluster of articles covering the same story |
+| `/news/category/{taxonomy}/{categoryId}` · `/news/topic/{topicId}` · `/news/industry/{industryId}` · `/news/entity/{entityId}` | GET · POST | Articles by taxonomy |
+| `/news/trends` | GET · POST | Aggregations: top values of a field, growth, time buckets |
+| `/news/event-types` | **GET only** | The 44 classified event types and their categories |
+| `/suggest/entities` · `/suggest/categories` · `/suggest/topics` · `/suggest/industries` | **GET only** | Autocomplete an ID from a name prefix |
+| `/balance` | **GET only** | Remaining quota for the key |
+| `/news/stream` | **GET only** | Live Server-Sent Events feed |
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/news/everything` | Search all articles with full filtering |
-| `/news/top-headlines` | Breaking and important news from sources with OPR rank >= 5 |
-| `/news/count` | Number of matching articles only — one `count(*)`, no article payload |
-| `/news/article` | A single article — pass `id=<articleId>`, not `article.id` (`400 ER0232` without it) |
-| `/news/story/{articleId}` | The cluster of articles covering the same story |
-| `/news/category/{taxonomy}/{categoryId}` · `/news/topic/{topicId}` · `/news/industry/{industryId}` · `/news/entity/{entityId}` | Articles by taxonomy |
-| `/news/trends` | Aggregations: top values of a field, growth, time buckets |
-| `/news/stream` | Live Server-Sent Events feed |
-| `/suggest/entities` · `/suggest/categories` · `/suggest/topics` · `/suggest/industries` | Autocomplete an ID from a name prefix |
-| `/balance` | Remaining quota for the key |
+The article and aggregation endpoints take the same parameters either as a query string on
+`GET` or as a JSON body on `POST` — use `POST` when a long filter set would blow past URL
+length limits. The endpoints marked GET-only answer `404` to a `POST`, not `405`, so a wrong
+method looks like a wrong path.
 
 ## Key parameters for `/news/everything`
 
 Filters combine with AND. Comma-separated values inside one parameter combine with OR.
+
+**The 3-value cap is enforced by silent truncation, not by an error.** Most list filters take
+at most 3 comma-separated values (5 for `event.type` and `article.id`). Pass more and the
+extras are dropped without any warning — the request still returns `200`:
+
+```
+entity.id=1297647                              → 126 957
+entity.id=1580517,474,1223812                  →   2 110
+entity.id=1580517,474,1223812,1297647          →   2 110   ← 4th ignored
+entity.id=1297647,1580517,474,1223812          → 127 040   ← now the 4th is the ignored one
+```
+
+Only the **first three** are applied, so order decides which value you lose. Split larger sets
+across several requests and merge on article `id`.
 
 - `title` — keyword search in article titles, 2–100 chars. Quotes for an exact phrase,
   `"climate change"~2` for proximity. **Title search is limited to a 31-day `published_at`
