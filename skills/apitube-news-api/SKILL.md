@@ -85,7 +85,9 @@ Filters combine with AND. Comma-separated values inside one parameter combine wi
 - `sort.by` — `published_at` (default), `relevance`, `engagement`, `quality`, `controversy`,
   `trust`, `source.rank.opr`, `sentiment.overall.score`, `read_time`, and more.
   `sort.order` is `asc` or `desc`.
-- `page`, `per_page` — pagination. `per_page` max is 250, capped at 10 on Free and 50 on Starter.
+- `page`, `per_page` — pagination. The ceiling is set by your plan: 10 on Free, 50 on Starter,
+  250 above that. Exceeding it is a hard `400 ER0171` ("Limit is out of range. Your plan allows
+  up to N results per page"), not a silent clamp — read N from the message to learn your cap.
 - `fl` — comma-separated list of fields to return, e.g. `fl=id,title,published_at,source.domain`.
   Cuts response size sharply on large pages.
 - `article.id` — fetch specific articles by ID through `/news/everything`, up to 5
@@ -93,8 +95,28 @@ Filters combine with AND. Comma-separated values inside one parameter combine wi
 - `query` — boolean search language with `AND` / `OR` / `NOT` and grouping, for expressions
   `title` cannot express: https://docs.apitube.io/platform/news-api/query-builder
 
-Every filter has an `ignore.` twin that excludes instead of includes: `ignore.source.domain`,
-`ignore.language.code`, `ignore.entity.id`, `ignore.title`, and so on.
+### Exclusions: only 21 filters have an `ignore.` twin
+
+`ignore.<filter>` excludes instead of includes, but **only these 21 exist**:
+
+```
+ignore.title              ignore.language.code       ignore.category.id
+ignore.topic.id           ignore.industry.id         ignore.entity.id
+ignore.source.id          ignore.source.domain       ignore.source.country.code
+ignore.source.bias        ignore.author.id           ignore.author.name
+ignore.person.name        ignore.organization.name   ignore.location.name
+ignore.brand.name         ignore.event.name          ignore.event.type
+ignore.disaster.name      ignore.disease.name        ignore.sport.name
+```
+
+Anything else — `ignore.is_breaking`, `ignore.has_image`, `ignore.sentiment.overall.polarity`
+— is **silently dropped**, with no error and an unchanged result count. There is no negation
+for sentiment, media, readability, read-time, geo or the boolean flags; invert those by
+selecting the complement instead (`has_image=0` rather than `ignore.has_image=1`).
+
+A working exclusion changes the count by exactly the excluded set: with 71 857 matching
+articles and 9 from `theclemsoninsider.com`, `ignore.source.domain=theclemsoninsider.com`
+returns 71 848.
 
 Example — English AI coverage from the last week, quality sources only:
 

@@ -1,5 +1,6 @@
 {
   "name": "apitube-news-api",
+  "description": "Official APITube skill for querying the APITube News API — worldwide news articles with sentiment, entities and 150+ filters.",
   "owner": {
     "name": "APITube",
     "url": "https://apitube.io"
