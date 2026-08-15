@@ -103,11 +103,16 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
   "https://api.apitube.io/v1/news/trends?field=entity.id&published_at.start=NOW-7DAY&trending=1&trending_days=7&sort=growth_rate&per_page=15"
 ```
 
-Two things to know before you rely on it. Always pass `published_at.start` — an unbounded
-trending query is expensive enough to time out with a `502`. And `sort=trending_score` is
-currently not applied: the response comes back sorted by `count` and echoes `"sort": "count"`.
-Sort by `growth_rate`, or request `trending=1` and rank by `trending_score` yourself. Check the
-`sort` field in the response to see what the server actually used.
+Two things to know before you rely on it.
+
+**Trending queries are heavy.** Always scope them with `published_at.start`, and expect the
+occasional `502` on a wide window — a `502` here is a timeout, not a bad request, so retry it
+or narrow the range rather than changing the parameters.
+
+**`sort=trending_score` is not applied.** The response comes back sorted by `count` and echoes
+`"sort": "count"`. Sort by `growth_rate` instead, or pull the results and rank by
+`trending_score` yourself. Always read the `sort` field in the response to see what the server
+actually used — `growth_rate`, `value` and `change` are honoured.
 
 **`compare=1`** contrasts the current window against an earlier one. It requires
 `compare_window`, which accepts values like `24HOURS`, `7DAYS`, `1WEEK`, `1w`, `2m`. Each
