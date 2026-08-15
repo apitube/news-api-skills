@@ -63,6 +63,13 @@ The article and aggregation endpoints take the same parameters either as a query
 length limits. The endpoints marked GET-only answer `404` to a `POST`, not `405`, so a wrong
 method looks like a wrong path.
 
+`/news/stream` answers `200` with `content-type: text/event-stream` and takes the same filters.
+Between matches it emits SSE **comment** lines — the literal bytes `: heartbeat\n\n` — not
+events. A parser that assumes every frame is `event:`/`data:` will choke on them, so drop lines
+beginning with `:`. A stream whose filters match nothing sends only heartbeats and delivers no
+articles. Streaming is billed per delivered article, so narrow the filters rather than opening
+a second connection.
+
 ## Key parameters for `/news/everything`
 
 Filters combine with AND. Comma-separated values inside one parameter combine with OR.
