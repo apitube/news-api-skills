@@ -50,7 +50,10 @@ See https://docs.apitube.io/platform/news-api/authentication.
 | `/news/story/{articleId}` | GET · POST | The cluster of articles covering the same story |
 | `/news/category/{taxonomy}/{categoryId}` · `/news/topic/{topicId}` · `/news/industry/{industryId}` · `/news/entity/{entityId}` | GET · POST | Articles by taxonomy |
 | `/news/trends` | GET · POST | Aggregations: top values of a field, growth, time buckets |
+| `/news/local` | GET · POST | Geo search — `lat` + `lng` + `radius` in km |
+| `/news/raw` | GET · POST | Unenriched articles: `id`, `title`, `href`, `created_at`, `description`, `body`, `body_html`, `author`, `keywords`, `source` only — no sentiment, entities or taxonomy |
 | `/news/event-types` | **GET only** | The 44 classified event types and their categories |
+| `/people` · `/companies` · `/journalists` | **GET only** | Reference profiles, not articles: `id`, `name`, `links`, `profile` (`outlets` for journalists) |
 | `/suggest/entities` · `/suggest/categories` · `/suggest/topics` · `/suggest/industries` | **GET only** | Autocomplete an ID from a name prefix |
 | `/balance` | **GET only** | Remaining quota for the key |
 | `/news/stream` | **GET only** | Live Server-Sent Events feed |
@@ -178,9 +181,10 @@ parameters above before running the query and returns what it used in `meta.prom
 (`text`, `applied`, `ignored`, `cached`, `model`). Explicit parameters always win over the prompt.
 
 It is accepted on `/news/everything`, `/news/top-headlines`, `/news/count`, `/news/trends`,
-`/news/local`, `/news/raw`, `/news/stream`, `/news/ws` and the four taxonomy endpoints.
-On `/news/story` and `/news/article` it is **silently ignored** — no error, just an
-unfiltered result.
+`/news/local`, `/news/raw`, `/news/stream` and the four taxonomy endpoints. On `/news/story`
+and `/news/article` it is **silently ignored** — no error, just an unfiltered result. On
+`/news/raw` most of what a prompt produces cannot apply either, since that endpoint only
+understands dates, sorting and pagination.
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
@@ -302,10 +306,10 @@ Notes that matter when you parse this:
 - `keywords`, `links` and `media` are empty arrays roughly a third of the time, and `topics` is
   empty for about half of all articles. `entities` and `categories` are reliably populated.
   Do not treat an empty array as a parsing failure.
-- `story.uri` is a ready-made link to `/news/story/{id}` for this article. **`story.id` is not
+- `story.uri` is a ready-made link to `/news/story/{articleId}` for this article. **`story.id` is not
   a cluster key** — it always equals the article's own `id`, including for articles returned
   together by `/news/story`. You cannot group articles by comparing `story.id`; call
-  `/news/story/{id}` and use the returned set.
+  `/news/story/{articleId}` and use the returned set.
 
 The article `href` points at the original publisher — link there, do not present the body as
 your own.
