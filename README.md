@@ -1,12 +1,12 @@
-# APITube News API — Agent Skill
+# APITube News API — skill for AI coding agents
 
-Official [Agent Skill](https://agentskills.io/) for the [APITube](https://apitube.io) News
-API. It teaches a coding agent how to authenticate, search worldwide news, filter by entity,
-sentiment, source and date, and read the JSON response — without guessing parameter names.
+The official `SKILL.md` for the [APITube](https://apitube.io) News API. It teaches a coding
+agent how to authenticate, search worldwide news, filter by entity, sentiment, source and
+date, and read the JSON response — without guessing parameter names.
 
-Agent Skills are an open standard, so this works in Claude Code, Cursor, Codex, GitHub
-Copilot, VS Code, Gemini CLI, Amp, Goose, opencode, Roo Code, Windsurf, JetBrains Junie and
-every other skills-compatible agent.
+`SKILL.md` is an open format, so this works in Claude Code, Cursor, Codex, GitHub Copilot,
+VS Code, Gemini CLI, Amp, Goose, opencode, Roo Code, Windsurf, JetBrains Junie and every other
+skills-compatible agent.
 
 You need an API key: **[get one at apitube.io](https://apitube.io)** — the free tier is 100
 requests/day and does not require a card.
@@ -77,8 +77,7 @@ consume quota — use one while wiring things up.
 
 ## Without installing anything
 
-APITube serves its skills over HTTP under the
-[Agent Skills discovery spec](https://agentskills.io/), so an agent can find them on its own:
+APITube also serves its skills over HTTP, so an agent can discover them on its own:
 
 - Index: https://docs.apitube.io/.well-known/agent-skills/index.json
 - MCP server card: https://docs.apitube.io/.well-known/mcp/server-card.json

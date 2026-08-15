@@ -4,7 +4,7 @@ Guidance for AI agents working in this repository.
 
 ## What this repository is
 
-The official [Agent Skill](https://agentskills.io/) for the APITube News API. The skill is a
+The official `SKILL.md` for the APITube News API. The skill is a
 folder under `skills/` containing a single `SKILL.md`: YAML frontmatter with `name` and
 `description`, then markdown instructions.
 
