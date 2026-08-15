@@ -1,6 +1,7 @@
 ---
 name: apitube-news-api
-description: Query the APITube News API — authenticate, search and filter worldwide news articles, and parse the JSON response. Use when an agent needs live or historical news data.
+description: Query the APITube News API — authenticate, search and filter worldwide news articles by keyword, entity, sentiment, source, country and date, and parse the JSON response. Use when an agent needs live or historical news data, media monitoring, or news for a RAG pipeline.
+license: MIT
 ---
 
 # APITube News API
