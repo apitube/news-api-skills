@@ -18,7 +18,7 @@ the response comes back in that format instead.
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.apitube.io/v1/news/everything?topic.id=technology&published_at.start=NOW-7DAY&per_page=250&export=csv" \
+  "https://api.apitube.io/v1/news/everything?topic.id=industry.technology_news&published_at.start=NOW-7DAY&per_page=250&export=csv" \
   -o tech-week.csv
 ```
 
@@ -77,7 +77,7 @@ expected in `json`, `jsonl` and `parquet`.
 page=1
 while : ; do
   curl -sS -H "Authorization: Bearer YOUR_API_KEY" \
-    "https://api.apitube.io/v1/news/everything?topic.id=technology&published_at.start=2026-07-01&published_at.end=2026-07-31&per_page=250&page=${page}&export=jsonl" \
+    "https://api.apitube.io/v1/news/everything?topic.id=industry.technology_news&published_at.start=2026-07-01&published_at.end=2026-07-31&per_page=250&page=${page}&export=jsonl" \
     >> july-tech.jsonl || break
   page=$((page+1))
   [ "$page" -gt 40 ] && break
@@ -102,7 +102,7 @@ articles or 400,000 before spending quota on it:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.apitube.io/v1/news/count?topic.id=technology&published_at.start=2026-07-01&published_at.end=2026-07-31"
+  "https://api.apitube.io/v1/news/count?topic.id=industry.technology_news&published_at.start=2026-07-01&published_at.end=2026-07-31"
 ```
 
 ```json

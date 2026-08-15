@@ -71,7 +71,7 @@ before counting:
 ```bash
 # Which companies dominate negative-free technology coverage in German media this week
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.apitube.io/v1/news/trends?field=entity.id&topic.id=technology&source.country.code=de&published_at.start=NOW-1WEEK&per_page=20"
+  "https://api.apitube.io/v1/news/trends?field=entity.id&topic.id=industry.technology_news&source.country.code=de&published_at.start=NOW-1WEEK&per_page=20"
 ```
 
 **Maximum date range is 30 days.** For longer horizons, run consecutive windows and stitch
@@ -100,8 +100,14 @@ Raw counts favour perennially popular subjects. Two mechanisms surface movement 
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.apitube.io/v1/news/trends?field=entity.id&trending=1&trending_days=7&sort=trending_score&per_page=15"
+  "https://api.apitube.io/v1/news/trends?field=entity.id&published_at.start=NOW-7DAY&trending=1&trending_days=7&sort=growth_rate&per_page=15"
 ```
+
+Two things to know before you rely on it. Always pass `published_at.start` — an unbounded
+trending query is expensive enough to time out with a `502`. And `sort=trending_score` is
+currently not applied: the response comes back sorted by `count` and echoes `"sort": "count"`.
+Sort by `growth_rate`, or request `trending=1` and rank by `trending_score` yourself. Check the
+`sort` field in the response to see what the server actually used.
 
 **`compare=1`** contrasts the current window against an earlier one. It requires
 `compare_window`, which accepts values like `24HOURS`, `7DAYS`, `1WEEK`, `1w`, `2m`. Each
@@ -112,8 +118,8 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
   "https://api.apitube.io/v1/news/trends?field=topic.id&published_at.start=NOW-1DAY&compare=1&compare_window=7DAYS&sort=change&per_page=20"
 ```
 
-`sort=change` and `sort=trending_score` only work with `compare=1` and `trending=1`
-respectively.
+`sort=change` requires `compare=1`; verified working. `sort=trending_score` is documented but
+does not take effect — see the note above.
 
 ## Time series
 

@@ -29,7 +29,7 @@ Each also has an exact-match form without `.min` / `.max`: `sentiment.overall.sc
 ```bash
 # Strongly negative English coverage of a topic in the last 3 days
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.apitube.io/v1/news/everything?topic.id=technology&sentiment.overall.score.max=-0.4&language.code=en&published_at.start=NOW-3DAY&per_page=50"
+  "https://api.apitube.io/v1/news/everything?topic.id=industry.technology_news&sentiment.overall.score.max=-0.4&language.code=en&published_at.start=NOW-3DAY&per_page=50"
 ```
 
 ### Select neutral coverage by score, not by polarity

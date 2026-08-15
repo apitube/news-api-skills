@@ -65,7 +65,10 @@ Filters combine with AND. Comma-separated values inside one parameter combine wi
   so a stored query never goes stale.
 - `language.code` — ISO 639-1, up to 3 comma-separated (`en`, `en,fr,de`).
 - `category.id`, `topic.id`, `industry.id`, `entity.id` — taxonomy IDs, up to 3 each.
-  Resolve names to IDs with `/suggest/*` first.
+  **Resolve them with `/suggest/*` first — do not guess.** The ID types differ: entities and
+  industries are integers (`1580517`), topics are dotted slugs (`industry.technology_news`),
+  categories are IPTC MediaTopic codes (`medtop:04000000`). A guessed value returns
+  `400 ER0208`, not an empty result — `topic.id=technology`, for instance, does not exist.
 - `person.name`, `organization.name`, `location.name`, `brand.name`, `event.name`,
   `disease.name`, `disaster.name`, `sport.name` — filter by entity name without looking up an ID.
 - `source.domain`, `source.id`, `source.country.code`, `source.bias` (`left`, `center`, `right`),
