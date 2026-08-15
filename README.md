@@ -28,6 +28,11 @@ Every parameter, field name, limit and error code in it was executed against the
 npx skills add apitube/news-api-skills --skill apitube-news-api --agent claude-code
 ```
 
+This installs into the **current project**, not your home directory: the file lands in
+`./.claude/skills/apitube-news-api/SKILL.md` and a `skills-lock.json` is written alongside it,
+pinning the source repo and a content hash. Run it from your project root, and commit the lock
+file if you want the whole team on the same revision.
+
 `--agent` takes your agent's slug — the [skills.sh](https://skills.sh) registry covers Claude
 Code, Cursor, Codex, GitHub Copilot, VS Code, Gemini, Windsurf, opencode, Amp, Goose, Roo,
 Cline, Kiro, Trae, Zed and others; run `npx skills add --help` for the current list.
@@ -36,7 +41,12 @@ Cline, Kiro, Trae, Zed and others; run `npx skills add --help` for the current l
 
 ```
 /plugin marketplace add apitube/news-api-skills
+/plugin install news-api-skills@apitube-news-api
 ```
+
+The first command registers the marketplace, the second installs the plugin at user scope.
+Remove them with `/plugin uninstall news-api-skills@apitube-news-api` and
+`/plugin marketplace remove apitube-news-api`.
 
 ### Manual — copy the folder
 
