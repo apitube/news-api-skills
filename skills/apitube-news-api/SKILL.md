@@ -267,17 +267,29 @@ Abridged, with the real shapes:
 
 Notes that matter when you parse this:
 
-- `entities[]` carries **per-entity sentiment** plus `body.pos` character offsets, so you can
-  highlight the mention in the text. `frequency` is the mention count.
+- `entities[]` carries **per-entity sentiment** (`score`, `polarity`, and a `mentions`
+  breakdown) and `frequency`, the mention count. This is the field to read when you need
+  "how did this article talk about *this* company", as opposed to the article-level
+  `sentiment`.
+- **Do not use `entities[].body.pos` to highlight text.** The `start`/`end` offsets are
+  measured against an upstream version of the article that the API does not return; they line
+  up with neither `body` nor `body_html`, and the drift is not a constant you can correct for
+  (4, 7, 19, 23, 53 characters across entities in a single article). Some entities have offsets
+  while their name does not appear in `body` at all. Locate mentions by searching `body`
+  yourself.
 - `image` is a plain string URL, while `media` is a separate array — an article can have an
   `image` and an empty `media`. When there is no image the value is `""`, never `null`.
 - `author` is always an object, never a string and never `null`. With no byline it is
   `{"id": null, "name": ""}` — test `author.name`, not `author`, or every anonymous article
   looks attributed.
 - `translations.en.{title,description}` are `null` for articles already in English.
-- `keywords`, `links` and `media` are empty arrays roughly a third of the time. Do not treat an
-  empty one as a parsing failure.
-- `story.uri` gives you the cluster endpoint for this article directly — no need to build it.
+- `keywords`, `links` and `media` are empty arrays roughly a third of the time, and `topics` is
+  empty for about half of all articles. `entities` and `categories` are reliably populated.
+  Do not treat an empty array as a parsing failure.
+- `story.uri` is a ready-made link to `/news/story/{id}` for this article. **`story.id` is not
+  a cluster key** — it always equals the article's own `id`, including for articles returned
+  together by `/news/story`. You cannot group articles by comparing `story.id`; call
+  `/news/story/{id}` and use the returned set.
 
 The article `href` points at the original publisher — link there, do not present the body as
 your own.
