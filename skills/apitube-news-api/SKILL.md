@@ -30,8 +30,12 @@ curl -H "X-API-Key: YOUR_API_KEY" \
 curl "https://api.apitube.io/v1/news/everything?per_page=10&api_key=YOUR_API_KEY"
 ```
 
-Keys prefixed `api_test_` run against the same data but return masked bodies and do not
-consume quota — use them while wiring up an integration.
+Keys prefixed `api_test_` run against the same data and do not consume quota, so use one while
+wiring up an integration. Only `body` and `body_html` are truncated, and the cut is marked with
+`[Test mode — use a live key for full content]`; title, description, entities, sentiment,
+categories and source come through in full. The Free plan truncates the same two fields, with
+the marker `[Upgrade subscription plan]`. Check for those strings to detect a truncated body
+instead of guessing from its length.
 See https://docs.apitube.io/platform/news-api/authentication.
 
 ## Endpoints
@@ -152,7 +156,12 @@ character in the query string is the first thing to check.
 
 `prompt` (3–500 chars) describes the search in words; the API translates it into the
 parameters above before running the query and returns what it used in `meta.prompt`
-(`text`, `applied`, `ignored`, `cached`). Explicit parameters always win over the prompt.
+(`text`, `applied`, `ignored`, `cached`, `model`). Explicit parameters always win over the prompt.
+
+It is accepted on `/news/everything`, `/news/top-headlines`, `/news/count`, `/news/trends`,
+`/news/local`, `/news/raw`, `/news/stream`, `/news/ws` and the four taxonomy endpoints.
+On `/news/story` and `/news/article` it is **silently ignored** — no error, just an
+unfiltered result.
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
@@ -195,16 +204,31 @@ A successful response has `status: "ok"`. Paginate by following `next_page`, or 
 incrementing `page` while `has_next_pages` is `true`. The article `href` points at the
 original publisher — link there, do not present the body as your own.
 
-Watch the names: filter parameters and response fields are not always spelled the same.
-You filter on `source.rank.opr.min`, but the value comes back as `source.rankings.opr`.
-Sentiment is `{ score, polarity }` under `sentiment.overall`, `sentiment.title` and
-`sentiment.body`. The full field list is at
-https://docs.apitube.io/platform/news-api/response-structure
+### Do not feed response values straight back into filters
+
+Filter parameters and response fields are not always spelled the same, and for categories they
+do not even hold the same value.
+
+| You filter on | It comes back as |
+|---|---|
+| `source.rank.opr.min` | `source.rankings.opr` |
+| `category.id=medtop:20001248` (IPTC code) | `categories[].id` = `11` (internal integer) |
+| `sentiment.overall.polarity` | `sentiment.overall.{score, polarity}` |
+
+Passing a response category ID back as a filter fails: `category.id=11` returns
+`400 ER0206 "category with ID '11' not found"`, while `category.id=medtop:20001248` returns
+299 articles. The IPTC code for a category is in its `links.self`
+(`/news/category/iptc_mediatopics/medtop:20001248`) — take it from there, or resolve names
+with `/suggest/categories`. Entities (`entities[].id`) and industries (`industries[].id`) are
+integers in both directions and round-trip cleanly; topics are dotted slugs in both.
+
+The full field list is at https://docs.apitube.io/platform/news-api/response-structure
 
 ## Rate limits and errors
 
-- Free: 10 requests per minute, 100 per day, results limited to the first 5 pages.
-  Starter and above: 50 requests per minute.
+- Free: 10 requests per minute, 100 per day, and pagination stops after page 5 —
+  `page=6` returns `400 ER0173`. Starter and above: 50 requests per minute. Test keys
+  (`api_test_`) get their own 15 per minute.
 - Every response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` (seconds).
 - `429 ER0203` — rate limit exceeded; back off until the reset. Repeated violations lead to
   a temporary ban (`ER0204`).
