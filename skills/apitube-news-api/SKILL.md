@@ -92,7 +92,13 @@ across several requests and merge on article `id`.
   categories are IPTC MediaTopic codes (`medtop:04000000`). A guessed value returns
   `400 ER0208`, not an empty result — `topic.id=technology`, for instance, does not exist.
 - `person.name`, `organization.name`, `location.name`, `brand.name`, `event.name`,
-  `disease.name`, `disaster.name`, `sport.name` — filter by entity name without looking up an ID.
+  `disease.name`, `disaster.name`, `sport.name` — filter by entity name instead of an ID.
+  The name must match the dictionary exactly, and a miss is a **`400` error, not an empty
+  result**: `location.name=New York` → `ER0218`, `brand.name=iPhone` → `ER0222`,
+  `sport.name=football` → `ER0250`, `event.name=Olympics` → `ER0228`,
+  `disaster.name=flood` → `ER0224`. `person.name=Elon Musk` and
+  `organization.name=Google` do resolve. Confirm a name with `/suggest/entities` before
+  relying on it, or filter by `entity.id`.
 - `source.domain`, `source.id`, `source.country.code`, `source.bias` (`left`, `center`, `right`),
   `source.rank.opr.min` / `.max` (Open PageRank authority), `is_premium_source`, `is_verified_source`.
 - `sentiment.overall.polarity` — `positive` and `negative` work; **`neutral` currently matches
