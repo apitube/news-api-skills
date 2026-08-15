@@ -73,8 +73,12 @@ Filters combine with AND. Comma-separated values inside one parameter combine wi
   `disease.name`, `disaster.name`, `sport.name` — filter by entity name without looking up an ID.
 - `source.domain`, `source.id`, `source.country.code`, `source.bias` (`left`, `center`, `right`),
   `source.rank.opr.min` / `.max` (Open PageRank authority), `is_premium_source`, `is_verified_source`.
-- `sentiment.overall.polarity` (`positive` / `negative` / `neutral`) and
-  `sentiment.overall.score.min` / `.max` in the range −1…1.
+- `sentiment.overall.polarity` — `positive` and `negative` work; **`neutral` currently matches
+  nothing**, because neutral articles are stored without a polarity value even though their
+  responses show `"polarity": "neutral"`. For neutral coverage use a score band instead:
+  `sentiment.overall.score.min=-0.1&sentiment.overall.score.max=0.1`. The score filters
+  (`sentiment.overall.score.min` / `.max`, range −1…1) are reliable in all three cases, and
+  `sentiment.title.*` / `sentiment.body.*` behave the same way.
 - `is_breaking`, `is_paywall`, `is_duplicate`, `is_high_quality`, `has_author`, `has_image`, `has_video`.
 - `event.type` — one of 44 classified event types (`ipo`, `layoffs`, `funding-round`,
   `data-breach`, `earthquake`, …), up to 5; `event.category` is `business`, `society` or `environment`.
@@ -96,8 +100,13 @@ Example — English AI coverage from the last week, quality sources only:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  'https://api.apitube.io/v1/news/everything?title="artificial intelligence"&language.code=en&published_at.start=NOW-7DAY&source.rank.opr.min=5&sort.by=published_at&per_page=10'
+  'https://api.apitube.io/v1/news/everything?title=%22artificial%20intelligence%22&language.code=en&published_at.start=NOW-7DAY&source.rank.opr.min=5&sort.by=published_at&per_page=10'
 ```
+
+**URL-encode the value.** A raw quote or space in `title` makes the server return an *empty
+body* rather than an error — `"artificial intelligence"` must be sent as
+`%22artificial%20intelligence%22`. If a request comes back with nothing at all, an unencoded
+character in the query string is the first thing to check.
 
 ## Plain-language queries with `prompt`
 

@@ -9,18 +9,10 @@
       "name": "news-api-skills",
       "source": "./",
       "version": "1.0.0",
-      "description": "Official APITube News API skills for AI coding agents",
+      "description": "Official APITube News API skill for AI coding agents",
       "strict": false,
       "skills": [
-        "./skills/apitube-news-api",
-        "./skills/apitube-mcp",
-        "./skills/apitube-media-monitoring",
-        "./skills/apitube-news-sentiment",
-        "./skills/apitube-breaking-news",
-        "./skills/apitube-news-stream",
-        "./skills/apitube-news-trends",
-        "./skills/apitube-news-export",
-        "./skills/apitube-migrate-to-apitube"
+        "./skills/apitube-news-api"
       ]
     }
   ]
