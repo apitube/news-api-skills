@@ -101,7 +101,10 @@ across several requests and merge on article `id`.
   `sentiment.overall.score.min=-0.1&sentiment.overall.score.max=0.1`. The score filters
   (`sentiment.overall.score.min` / `.max`, range −1…1) are reliable in all three cases, and
   `sentiment.title.*` / `sentiment.body.*` behave the same way.
-- `is_breaking`, `is_paywall`, `is_duplicate`, `is_high_quality`, `has_author`, `has_image`, `has_video`.
+- `is_breaking`, `is_duplicate`, `is_high_quality`, `has_author`, `has_image`, `has_video`,
+  `is_premium_source`, `is_verified_source`, `is_clickbait` — all verified to filter.
+  **`is_paywall` is dead**: `is_paywall=1` returns zero articles across the whole index, and
+  `is_paywall=0` returns everything, so it cannot be used to avoid paywalled links.
 - `event.type` — one of 44 classified event types (`ipo`, `layoffs`, `funding-round`,
   `data-breach`, `earthquake`, …), up to 5; `event.category` is `business`, `society` or `environment`.
 - `sort.by` — `published_at` (default), `relevance`, `engagement`, `quality`, `controversy`,
@@ -174,35 +177,110 @@ plan or above — Free and Starter get `403 ER0706`. Other errors: `ER0800` (len
 
 ## Response shape
 
+### Envelope
+
+Eleven keys, always the same:
+
 ```json
 {
   "status": "ok",
-  "limit": 10,
+  "limit": 2,
+  "path": "http://api.apitube.io/v1/news/everything?language.code=en&per_page=2",
   "page": 1,
   "has_next_pages": true,
-  "next_page": "https://api.apitube.io/v1/news/everything?...&page=2",
-  "results": [
-    {
-      "id": 3036291250,
-      "href": "https://original-source.example/article",
-      "published_at": "2026-05-20T10:00:00Z",
-      "title": "...",
-      "description": "...",
-      "body": "...",
-      "language": "en",
-      "source": { "id": 123, "domain": "example.com", "bias": "center", "rankings": { "opr": 7 } },
-      "sentiment": { "overall": { "score": 0.42, "polarity": "positive" } },
-      "entities": [],
-      "categories": [],
-      "topics": []
-    }
-  ]
+  "next_page": "http://api.apitube.io/v1/news/everything?language.code=en&per_page=2&page=2",
+  "has_previous_page": false,
+  "previous_page": "",
+  "export": { "json": "http://…&export=json", "xlsx": "…", "csv": "…", "tsv": "…",
+              "xml": "…", "rss": "…", "parquet": "…", "jsonl": "…" },
+  "request_id": "ad527b55-4083-4174-a0b6-0a0a1f7adc8b",
+  "results": [ /* … */ ]
 }
 ```
 
-A successful response has `status: "ok"`. Paginate by following `next_page`, or by
-incrementing `page` while `has_next_pages` is `true`. The article `href` points at the
-original publisher — link there, do not present the body as your own.
+**`path`, `next_page` and every `export` URL come back as `http://`, not `https://`.** Rewrite
+the scheme before following one, or your pagination loop downgrades to plaintext HTTP. Safer
+still: keep your own base URL and just increment `page` while `has_next_pages` is `true`.
+`previous_page` is `""` — an empty string, not `null` — on the first page.
+
+On failure `status` is `"not_ok"` and the body carries an `errors` array instead of `results`:
+`[{ "status": 400, "code": "ER0208", "message": "…", "links": { "about": "…" }, "timestamp": "…" }]`.
+Branch on `status`, not on the HTTP code alone.
+
+### Article object
+
+Every article carries the same **33 fields** — the set does not vary between articles.
+Abridged, with the real shapes:
+
+```json
+{
+  "id": 3072206097,
+  "href": "https://gulfnews.com/world/asia/india/…",
+  "published_at": "2026-08-15T06:39:23.000Z",
+  "title": "UAE-India: A generational partnership for a shared future",
+  "description": "On the auspicious occasion of the 80th Independence Day…",
+  "body": "…plain text…",
+  "body_html": "<div><div><p>…</p></div></div>",
+  "language": "en",
+  "translations": { "en": { "title": null, "description": null } },
+  "author": { "id": 20059328, "name": "A GN Focus Report" },
+  "image": "https://media.assettype.com/…",
+  "categories": [ { "id": 268, "name": "emerging market", "score": 0.8,
+                    "taxonomy": "iptc_mediatopics",
+                    "links": { "self": "…/news/category/iptc_mediatopics/medtop:20001248" } } ],
+  "topics":     [ { "id": "industry.green_energy_news", "name": "Green Energy Industry News",
+                    "score": 0.9, "links": { "self": "…" } } ],
+  "industries": [ { "id": 444, "name": "Credit Unions", "links": { "self": "…" } } ],
+  "entities":   [ { "id": 1751049, "name": "IHC (International Holding Company)",
+                    "type": "organization", "frequency": 1,
+                    "links": { "self": "…", "wikipedia": "…", "wikidata": "…" },
+                    "sentiment": { "score": 0, "polarity": "neutral",
+                                   "mentions": { "positive": 0, "neutral": 1, "negative": 0 } },
+                    "title": { "pos": [] },
+                    "body":  { "pos": [ { "start": 4510, "end": 4539 } ] },
+                    "metadata": { "type": "business", "subtype": "company", "aliases": [],
+                                  "country": { "code": "AE", "name": "United Arab Emirates" },
+                                  "founded": { "year": 1998 }, "description": "…" } } ],
+  "locations_mentioned": [ { "name": "Abu Dhabi", "country": "AE",
+                             "lat": 24.45111, "lng": 54.39694, "type": "city" } ],
+  "source": { "id": 9186, "domain": "gulfnews.com",
+              "home_page_url": "https://gulfnews.com", "type": "news", "bias": "left",
+              "rankings": { "opr": 6 },
+              "location": { "country_name": "United Arab Emirates", "country_code": "ae" },
+              "favicon": "https://www.google.com/s2/favicons?domain=https://gulfnews.com" },
+  "sentiment": { "overall": { "score": 0.11, "polarity": "positive" },
+                 "title":   { "score": 0.13, "polarity": "positive" },
+                 "body":    { "score": 0.09, "polarity": "positive" } },
+  "summary": [ { "sentence": "…", "sentiment": { "score": 0.14, "polarity": "positive" } } ],
+  "keywords": [], "links": [], "media": [],
+  "readability": { "flesch_kincaid_grade": 17, "flesch_reading_ease": 17.9,
+                   "automated_readability_index": 17.5, "difficulty_level": "expert",
+                   "target_audience": "academic", "reading_age": 22,
+                   "avg_words_per_sentence": 25, "avg_syllables_per_word": 1.9 },
+  "story":  { "id": 3072206097, "uri": "https://api.apitube.io/v1/news/story/3072206097" },
+  "shares": { "total": 6, "facebook": 3, "twitter": 2, "reddit": 1 },
+  "is_duplicate": false, "is_free": true, "is_breaking": false,
+  "read_time": 8, "sentences_count": 42, "paragraphs_count": 1,
+  "words_count": 1049, "characters_count": 7163
+}
+```
+
+Notes that matter when you parse this:
+
+- `entities[]` carries **per-entity sentiment** plus `body.pos` character offsets, so you can
+  highlight the mention in the text. `frequency` is the mention count.
+- `image` is a plain string URL, while `media` is a separate array — an article can have an
+  `image` and an empty `media`. When there is no image the value is `""`, never `null`.
+- `author` is always an object, never a string and never `null`. With no byline it is
+  `{"id": null, "name": ""}` — test `author.name`, not `author`, or every anonymous article
+  looks attributed.
+- `translations.en.{title,description}` are `null` for articles already in English.
+- `keywords`, `links` and `media` are empty arrays roughly a third of the time. Do not treat an
+  empty one as a parsing failure.
+- `story.uri` gives you the cluster endpoint for this article directly — no need to build it.
+
+The article `href` points at the original publisher — link there, do not present the body as
+your own.
 
 ### Do not feed response values straight back into filters
 
