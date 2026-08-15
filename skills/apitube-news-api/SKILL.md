@@ -64,22 +64,28 @@ method looks like a wrong path.
 
 Filters combine with AND. Comma-separated values inside one parameter combine with OR.
 
-**The 3-value cap is enforced by silent truncation, not by an error.** Most list filters take
-at most 3 comma-separated values (5 for `event.type` and `article.id`). Pass more and the
-extras are dropped without any warning — the request still returns `200`:
+**The per-parameter value cap is enforced by silent truncation, not by an error.** Most list
+filters take at most 3 comma-separated values; `event.type` and `article.id` take 5. Pass more
+and the extras are dropped with no warning — the request still returns `200`:
 
 ```
 entity.id=1297647                              → 126 957
 entity.id=1580517,474,1223812                  →   2 110
 entity.id=1580517,474,1223812,1297647          →   2 110   ← 4th ignored
 entity.id=1297647,1580517,474,1223812          → 127 040   ← now the 4th is the ignored one
+
+event.type=ipo,layoffs,bankruptcy,recall,data-breach              → 26 511
+event.type=ipo,layoffs,bankruptcy,recall,data-breach,earthquake   → 26 511   ← 6th ignored
+event.type=earthquake                                             →  9 536   ← it does match on its own
 ```
 
-Only the **first three** are applied, so order decides which value you lose. Split larger sets
-across several requests and merge on article `id`.
+Only the first N are applied, where N is that parameter's cap, so **order decides which value
+you lose**. Split larger sets across several requests and merge on article `id`.
 
-- `title` — keyword search in article titles, 2–100 chars. Quotes for an exact phrase,
-  `"climate change"~2` for proximity. **Title search is limited to a 31-day `published_at`
+- `title` — keyword search in article titles, 2–100 chars; outside that range it is
+  `400 ER0007`, whose message reads "between 1 and 100 characters" but rejects a single
+  character anyway. Quotes for an exact phrase, `"climate change"~2` for proximity. Percent-
+  encode the value. **Title search is limited to a 31-day `published_at`
   window**: with no dates the last 31 days are searched (`200` plus warning `ER0366` in
   `meta.warnings`); an explicit wider range returns `400 ER0110`. Variants:
   `title_starts_with`, `title_ends_with`, `title_pattern`.
@@ -101,7 +107,10 @@ across several requests and merge on article `id`.
   `organization.name=Google` do resolve. Confirm a name with `/suggest/entities` before
   relying on it, or filter by `entity.id`.
 - `source.domain`, `source.id`, `source.country.code`, `source.bias` (`left`, `center`, `right`),
-  `source.rank.opr.min` / `.max` (Open PageRank authority), `is_premium_source`, `is_verified_source`.
+  `source.rank.opr.min` / `.max` — Open PageRank authority. In practice the data tops out at 8:
+  over a two-day window `min=6` matched 39 431 articles, `min=7` matched 3 940, `min=8` matched
+  80, and `min=9` matched none. Use 5 for "mainstream", 7 for "major outlet"; asking for 9+
+  silently returns nothing.
 - `sentiment.overall.polarity` — `positive` and `negative` work; **`neutral` currently matches
   nothing**, because neutral articles are stored without a polarity value even though their
   responses show `"polarity": "neutral"`. For neutral coverage use a score band instead:
