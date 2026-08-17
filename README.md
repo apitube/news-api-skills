@@ -1,5 +1,7 @@
 # APITube News API — skill for AI coding agents
 
+[![skills.sh](https://skills.sh/b/apitube/news-api-skills)](https://skills.sh/apitube/news-api-skills)
+
 The official `SKILL.md` for the [APITube](https://apitube.io) News API. It teaches a coding
 agent how to authenticate, search worldwide news, filter by entity, sentiment, source and
 date, and read the JSON response — without guessing parameter names.

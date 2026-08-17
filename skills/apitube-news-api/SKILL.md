@@ -16,19 +16,23 @@ or historically, then read structured fields (title, body, source, sentiment, en
 
 ## Authentication
 
-Pass your API key in one of three ways. Headers are recommended over the query parameter.
+Read the key from the environment variable `APITUBE_API_KEY` and reference it as `$APITUBE_API_KEY`.
+Never write the key itself into a command, a file or a code sample: a literal key ends up in shell
+history, logs and version control. If the variable is unset, ask the user to export it — do not ask
+them to paste the key into the chat.
 
 ```bash
 # 1. Authorization header (most secure)
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "Authorization: Bearer $APITUBE_API_KEY" \
   "https://api.apitube.io/v1/news/everything?per_page=10"
 
 # 2. X-API-Key header
-curl -H "X-API-Key: YOUR_API_KEY" \
+curl -H "X-API-Key: $APITUBE_API_KEY" \
   "https://api.apitube.io/v1/news/everything?per_page=10"
 
-# 3. Query parameter (avoid in production — leaks in logs)
-curl "https://api.apitube.io/v1/news/everything?per_page=10&api_key=YOUR_API_KEY"
+# 3. Query parameter — accepted, but it leaks the key into server logs,
+#    browser history and referrer headers. Use a header instead.
+curl "https://api.apitube.io/v1/news/everything?per_page=10&api_key=$APITUBE_API_KEY"
 ```
 
 Keys prefixed `api_test_` run against the same data and do not consume quota, so use one while
@@ -172,7 +176,7 @@ returns 71 848.
 Example — English AI coverage from the last week, quality sources only:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "Authorization: Bearer $APITUBE_API_KEY" \
   'https://api.apitube.io/v1/news/everything?title=%22artificial%20intelligence%22&language.code=en&published_at.start=NOW-7DAY&source.rank.opr.min=5&sort.by=published_at&per_page=10'
 ```
 
@@ -194,7 +198,7 @@ and `/news/article` it is **silently ignored** — no error, just an unfiltered 
 understands dates, sorting and pagination.
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "Authorization: Bearer $APITUBE_API_KEY" \
   "https://api.apitube.io/v1/news/everything?prompt=Tesla+and+Elon+Musk+news+in+English+for+the+last+10+days&per_page=10"
 ```
 
